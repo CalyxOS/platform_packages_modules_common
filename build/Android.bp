@@ -27,11 +27,6 @@ python_test_host {
     data: [
         "mainline_modules_sdks_test_data/**/*",
     ],
-    version: {
-        py3: {
-            embedded_launcher: true,
-        },
-    },
     test_suites: ["general-tests"],
 }
 
@@ -41,7 +36,7 @@ phony {
         "com.android.adbd",
         "com.android.adservices",
         "com.android.appsearch",
-        "com.android.btservices",
+        "com.android.bt",
         "com.android.configinfrastructure",
         "com.android.conscrypt",
         "com.android.devicelock",

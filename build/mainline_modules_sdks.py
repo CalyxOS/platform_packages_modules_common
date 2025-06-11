@@ -330,7 +330,7 @@ def module_sdk_project_for_module(module, root_dir):
     # art, hence adding special case for art.
     if module == "art":
         return "prebuilts/module_sdk/art"
-    if module == "btservices":
+    if module == "bt":
         return "prebuilts/module_sdk/Bluetooth"
     if module == "media":
         return "prebuilts/module_sdk/Media"
@@ -874,9 +874,6 @@ VanillaIceCream = BuildRelease(
     name="VanillaIceCream",
     # Generate a snapshot for this build release using Soong.
     creator=create_sdk_snapshots_in_soong,
-    # There are no build release specific environment variables to pass to
-    # Soong.
-    soong_env={},
     # Starting with V, setting `prefer|use_source_config_var` on soong modules
     # in prebuilts/module_sdk is not necessary.
     # prebuilts will be enabled using apex_contributions release build flags.
@@ -1126,10 +1123,10 @@ MAINLINE_MODULES = [
         module_proto_key="ART",
     ),
     MainlineModule(
-        apex="com.android.btservices",
-        sdks=["btservices-module-sdk"],
-        first_release=UpsideDownCake,
-        # Bluetooth has always been and is still optional.
+        apex="com.android.bt",
+        sdks=["bt-module-sdk"],
+        first_release=Baklava,
+        # Bluetooth is optional.
         last_optional_release=LATEST,
         module_proto_key="",
     ),
@@ -1154,6 +1151,13 @@ MAINLINE_MODULES = [
         for_r_build=None,
         last_optional_release=LATEST,
         module_proto_key="CONSCRYPT",
+    ),
+    MainlineModule(
+        apex="com.android.crashrecovery",
+        sdks=["crashrecovery-sdk"],
+        first_release=Baklava,
+        last_optional_release=LATEST,
+        module_proto_key="",
     ),
     MainlineModule(
         apex="com.android.devicelock",
@@ -1240,6 +1244,14 @@ MAINLINE_MODULES = [
         module_proto_key="PERMISSIONS",
     ),
     MainlineModule(
+        apex="com.android.profiling",
+        sdks=["profiling-module-sdk"],
+        first_release=Baklava,
+        # Profiling is optional.
+        last_optional_release=LATEST,
+        module_proto_key="",
+    ),
+    MainlineModule(
         apex="com.android.rkpd",
         sdks=["rkpd-sdk"],
         first_release=UpsideDownCake,
@@ -1256,7 +1268,10 @@ MAINLINE_MODULES = [
     ),
     MainlineModule(
         apex="com.android.sdkext",
-        sdks=["sdkextensions-sdk"],
+        sdks=[
+            "sdkextensions-sdk",
+            "sdkextensions-host-exports",
+        ],
         first_release=R,
         for_r_build=ForRBuild(sdk_libraries=[
             SdkLibrary(name="framework-sdkextensions"),
@@ -1511,9 +1526,12 @@ class SdkDistProducer:
         sdk_type = sdk_type_from_name(sdk)
         subdir = sdk_type.name
 
+        # HostExports are not needed for R.
+        if build_release == R and sdk_type == HostExports:
+            return
+
         sdk_dist_subdir = os.path.join(sdk_dist_dir, module.apex, subdir)
         sdk_path = sdk_snapshot_zip_file(snapshots_dir, sdk)
-        sdk_type = sdk_type_from_name(sdk)
         transformations = module.transformations(build_release, sdk_type)
         self.dist_sdk_snapshot_zip(
             build_release, sdk_path, sdk_dist_subdir, transformations)
